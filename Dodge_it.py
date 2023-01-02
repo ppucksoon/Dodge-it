@@ -1,3 +1,4 @@
+from functools import cache
 import math
 import pygame
 import random
@@ -18,75 +19,75 @@ done = False
 clock = pygame.time.Clock()
 pygame.display.set_caption('Dodge it')
 
-font = pygame.font.Font('./font/NotoSansKR-Black.otf', 800)
-cooldown_font = pygame.font.Font(
-    './font/NotoSansKR-Black.otf', 25)
-board_font = pygame.font.Font('./font/OpenSans-Regular.ttf', 20)
-input_font = pygame.font.Font('./font/OpenSans-Regular.ttf', 30)
-intro_font = pygame.font.Font('./font/OpenSans-Regular.ttf', 40)
+@cache
+def get_font(font, font_size):
+    return pygame.font.Font(f'./font/{font}', font_size)
+
+def write(txt, font, font_size, color, pos, criterion="center", alpha = 255):
+    text = get_font(font, font_size).render(txt, True, color)
+    text_pos = text.get_rect()
+    if criterion == "center":
+        text_pos.center = pos
+    elif criterion == "top":
+        text_pos.top = pos
+    elif criterion == "topleft":
+        text_pos.topleft = pos
+    elif criterion == "topright":
+        text_pos.topright = pos
+    elif criterion == "bottom":
+        text_pos.bottom = pos
+    elif criterion == "bottomleft":
+        text_pos.bottomleft = pos
+    elif criterion == "bottomright":
+        text_pos.bottomright = pos
+    text.set_alpha(alpha)
+    screen.blit(text, text_pos)
 
 # 이미지 불러오기
-player_ball = pygame.image.load(
-    './image/Dodge_it_player_ball.png')
+player_ball = pygame.image.load('./image/Dodge_it_player_ball.png')
 player_ball = pygame.transform.scale(player_ball, (30, 30))
-score_ball = pygame.image.load(
-    './image/Dodge_it_player_ball.png')
+score_ball = pygame.image.load('./image/Dodge_it_player_ball.png')
 score_ball = pygame.transform.scale(score_ball, (14, 14))
-enemy_ball = pygame.image.load(
-    './image/Dodge_it_enemy_ball.png')
+enemy_ball = pygame.image.load('./image/Dodge_it_enemy_ball.png')
 enemy_ball = pygame.transform.scale(enemy_ball, (14, 14))
 slow_ball = pygame.image.load('./image/Dodge_it_slow_ball.png')
 slow_ball = pygame.transform.scale(slow_ball, (14, 14))
-shield_ball = pygame.image.load(
-    './image/Dodge_it_shield_ball.png')
+shield_ball = pygame.image.load('./image/Dodge_it_shield_ball.png')
 shield_ball = pygame.transform.scale(shield_ball, (14, 14))
-double_ball = pygame.image.load(
-    './image/Dodge_it_double_ball.png')
+double_ball = pygame.image.load('./image/Dodge_it_double_ball.png')
 double_ball = pygame.transform.scale(double_ball, (14, 14))
 slow_icon = pygame.image.load('./image/Dodge_it_slow_icon.png')
 slow_icon = pygame.transform.scale(slow_icon, (30, 30))
-shield_icon = pygame.image.load(
-    './image/Dodge_it_shield_icon.png')
+shield_icon = pygame.image.load('./image/Dodge_it_shield_icon.png')
 shield_icon = pygame.transform.scale(shield_icon, (30, 30))
-double_icon = pygame.image.load(
-    './image/Dodge_it_double_icon.png')
+double_icon = pygame.image.load('./image/Dodge_it_double_icon.png')
 double_icon = pygame.transform.scale(double_icon, (30, 30))
-score_reblit = pygame.image.load(
-    './image/Dodge_it_reblit_icon.png')
+score_reblit = pygame.image.load('./image/Dodge_it_reblit_icon.png')
 score_reblit = pygame.transform.scale(score_reblit, (40, 40))
-leaderboard = pygame.image.load(
-    './image/Dodge_it_leaderboard.png')
+leaderboard = pygame.image.load('./image/Dodge_it_leaderboard.png')
 leaderboard = pygame.transform.scale(leaderboard, (340, 510))
-pre_score_board = pygame.image.load(
-    './image/Dodge_it_previous_score.png')
+pre_score_board = pygame.image.load('./image/Dodge_it_previous_score.png')
 pre_score_board = pygame.transform.scale(pre_score_board, (340, 510))
-quit_button = pygame.image.load(
-    './image/Dodge_it_quit_button.png')
+quit_button = pygame.image.load('./image/Dodge_it_quit_button.png')
 quit_button = pygame.transform.scale(quit_button, (100, 100))
 keyboard = pygame.image.load('./image/Dodge_it_keyboard.png')
 keyboard = pygame.transform.scale(keyboard, (1500, 800))
 pause_button = pygame.image.load('./image/Dodge_it_pause.png')
 pause_button = pygame.transform.scale(pause_button, (40, 40))
-continue_button = pygame.image.load(
-    './image/Dodge_it_continue.png')
+continue_button = pygame.image.load('./image/Dodge_it_continue.png')
 continue_button = pygame.transform.scale(continue_button, (40, 40))
-intro_button = pygame.image.load(
-    './image/Dodge_it_introduction.png')
+intro_button = pygame.image.load('./image/Dodge_it_introduction.png')
 intro_button = pygame.transform.scale(intro_button, (100, 100))
-right_arrow = pygame.image.load(
-    './image/Dodge_it_right_arrow.png')
+right_arrow = pygame.image.load('./image/Dodge_it_right_arrow.png')
 right_arrow = pygame.transform.scale(right_arrow, (50, 100))
-left_arrow = pygame.image.load(
-    './image/Dodge_it_left_arrow.png')
+left_arrow = pygame.image.load('./image/Dodge_it_left_arrow.png')
 left_arrow = pygame.transform.scale(left_arrow, (50, 100))
 
 
 # 점수 데이터 클리어(초기화)
 def clearScoreData():
-    #global done
     with open(".\score\previous_score.pickle", "wb") as fw:
         pickle.dump([["None", 0]], fw)
-    #done = True
 
 
 # 애니메이션 함수
@@ -207,11 +208,6 @@ def tutorial():
     intro_text.append(
         "Purple balls give you an effect - your speed will decrease for 30sec")
 
-    how_to_quit_text = "-press space to quit-"
-    how_to_quit = input_font.render(how_to_quit_text, True, WHITE)
-    how_to_quitRect = how_to_quit.get_rect()
-    how_to_quitRect.center = (750, 750)
-
     while not quit:
         clock.tick(FPS)
         screen.fill(BLACK)
@@ -238,26 +234,16 @@ def tutorial():
                     elif mouse_pos[0] >= 0 and mouse_pos[0] <= 50:
                         if page > min_page:
                             page -= 1
-                elif mouse_pos[0] >= how_to_quitRect.topleft[0] and mouse_pos[0] <= how_to_quitRect.bottomright[0]:
-                    if mouse_pos[1] >= how_to_quitRect.topleft[1] and mouse_pos[1] <= how_to_quitRect.bottomright[1]:
-                        quit = True
 
         if page == 1:
             screen.blit(keyboard, (0, 0))
         elif page == 2:
             for i in range(0, len(how_to_play_text)):
-                how_to_play = intro_font.render(
-                    how_to_play_text[i], True, WHITE)
-                how_to_playRect = how_to_play.get_rect()
-                how_to_playRect.center = (750, 40*(i+1) + 80)
-                screen.blit(how_to_play, how_to_playRect)
+                write(how_to_play_text[i], "OpenSans-Regular.ttf", 40, WHITE, (750, 40*(i+1)+80))
             for i in range(0, len(intro_text)):
-                intro = intro_font.render(intro_text[i], True, WHITE)
-                introRect = intro.get_rect()
-                introRect.center = (750, 40*(i+1) + 400)
-                screen.blit(intro, introRect)
+                write(intro_text[i], "OpenSans-Regular.ttf", 40, WHITE, (750, 40*(i+1)+400))
 
-        screen.blit(how_to_quit, how_to_quitRect)
+        write("-press space to quit-", "OpenSans-Regular.ttf", 30, WHITE, (750, 750))
 
         if page == min_page:
             screen.blit(right_arrow, (1450, 350))
@@ -490,7 +476,7 @@ def runGame():
                             high_score = previous_score[:]
                         writing_name = False
 
-                    img1 = input_font.render(nickname, True, BLACK)
+                    img1 = get_font("OpenSans-Regular.ttf", 30).render(nickname, True, BLACK)
                     rect1.size = img1.get_size()
                     cursor1.topleft = rect1.topright
 
@@ -538,11 +524,7 @@ def runGame():
                         tutorial()
 
         # 점수 출력
-        score_text = font.render(f'{score}', True, WHITE)
-        score_textRect = score_text.get_rect()
-        score_textRect.center = (size[0] // 2, size[1] // 2 - 50)
-        score_text.set_alpha(50)
-        screen.blit(score_text, score_textRect)
+        write(f"{score}", "NotoSansKR-Black.otf", 800, WHITE, (size[0]//2, size[1]//2 - 50), alpha=50)
 
         # 화면 밖으로 나가면 반대에서 나옴
         if game_over == False:
@@ -700,46 +682,26 @@ def runGame():
         slow_cooltime = slow[1] - current_time + 1
         if slow_cooltime <= 0:
             slow_cooltime = 0
-        slow_cooldown_text = cooldown_font.render(
-            f"{int(slow_cooltime)}", True, WHITE)
-        slow_cooldown_textRect = slow_cooldown_text.get_rect()
-        slow_cooldown_textRect.center = (gameUI_text_x[1], 23)
-        slow_cooldown_text.set_alpha(150)
-        screen.blit(slow_cooldown_text, slow_cooldown_textRect)
+        write(f"{int(slow_cooltime)}", "NotoSansKR-Black.otf", 25, WHITE, (gameUI_text_x[1], 23), alpha=150)
 
         # ㄴshield 지속시간
         shield_cooltime = shield[1] - current_time + 1
         if shield_cooltime <= 0:
             shield_cooltime = 0
-        shield_cooldown_text = cooldown_font.render(
-            f"{int(shield_cooltime)}", True, WHITE)
-        shield_cooldown_textRect = shield_cooldown_text.get_rect()
-        shield_cooldown_textRect.center = (gameUI_text_x[1], 63)
-        shield_cooldown_text.set_alpha(150)
-        screen.blit(shield_cooldown_text, shield_cooldown_textRect)
+        write(f"{int(shield_cooltime)}", "NotoSansKR-Black.otf", 25, WHITE, (gameUI_text_x[1], 63), alpha=150)
 
         # ㄴdouble 지속시간
         double_cooltime = double[1] - current_time + 1
         if double_cooltime <= 0:
             double_cooltime = 0
-        double_cooldown_text = cooldown_font.render(
-            f"{int(double_cooltime)}", True, WHITE)
-        double_cooldown_textRect = double_cooldown_text.get_rect()
-        double_cooldown_textRect.center = (gameUI_text_x[1], 103)
-        double_cooldown_text.set_alpha(150)
-        screen.blit(double_cooldown_text, double_cooldown_textRect)
+        write(f"{int(double_cooltime)}", "NotoSansKR-Black.otf", 25, WHITE, (gameUI_text_x[1], 103), alpha=150)
 
         # reblit 아이콘 및 쿨타임
         screen.blit(score_reblit, (gameUI_icon_x[0] + 9, 10))
         reblit_cooltime = reset_cooldown_start - time.time() + 1
         if reblit_cooltime <= 0 or can_use_reset == True:
             reblit_cooltime = 0
-        reblit_cooldown_text = cooldown_font.render(
-            f"{int(reblit_cooltime)}", True, WHITE)
-        reblit_cooldown_textRect = reblit_cooldown_text.get_rect()
-        reblit_cooldown_textRect.center = (gameUI_text_x[0], 28)
-        reblit_cooldown_text.set_alpha(150)
-        screen.blit(reblit_cooldown_text, reblit_cooldown_textRect)
+        write(f"{int(reblit_cooltime)}", "NotoSansKR-Black.otf", 25, WHITE, (gameUI_text_x[0], 28), alpha=150)
 
         # 점수판 출력
         board_text_y = 70
@@ -749,67 +711,27 @@ def runGame():
 
         # 순위 / 순서 출력
         for i in range(1, 16):
-            rank_text = board_font.render(f"#{i}", True, BLACK)
-            previous_text = board_font.render(f"#{i}", True, BLACK)
-            screen.blit(
-                rank_text, (homeUI_text_x[0] - 300, board_text_y - 14))
-            screen.blit(previous_text,
-                        (homeUI_text_x[1] - 300, board_text_y - 14))
+            write(f"#{i}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[0] - 300, board_text_y - 14), "topleft")
+            write(f"#{i}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[1] - 300, board_text_y - 14), "topleft")
             board_text_y += 30
         board_text_y = 70
 
-        # 리더보드 랭킹 출력
         for i in range(0, pre_size):
-            leaderboard_score_text = board_font.render(
-                f"{high_score[i][1]}", True, BLACK)
-            leaderboard_score_textRect = leaderboard_score_text.get_rect()
-            leaderboard_score_textRect.center = (
-                homeUI_text_x[0], board_text_y)
-            screen.blit(leaderboard_score_text, leaderboard_score_textRect)
-            leaderboard_name_text = board_font.render(
-                f"{high_score[i][0]}", True, BLACK)
-            leaderboard_name_textRect = leaderboard_name_text.get_rect()
-            leaderboard_name_textRect.center = (
-                homeUI_text_x[0] - 140, board_text_y)
-            screen.blit(leaderboard_name_text, leaderboard_name_textRect)
+            # 리더보드 랭킹 출력
+            write(f"{high_score[i][1]}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[0], board_text_y))
+            write(f"{high_score[i][0]}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[0]-140, board_text_y))
 
             # 최근 플레이 기록 출력
-            previous_board_score_text = board_font.render(
-                f"{previous_score[i][1]}", True, BLACK)
-            previous_board_score_textRect = previous_board_score_text.get_rect()
-            previous_board_score_textRect.center = (
-                homeUI_text_x[1], board_text_y)
-            screen.blit(previous_board_score_text,
-                        previous_board_score_textRect)
-            previous_board_name_text = board_font.render(
-                f"{previous_score[i][0]}", True, BLACK)
-            previous_board_name_textRect = previous_board_name_text.get_rect()
-            previous_board_name_textRect.center = (
-                homeUI_text_x[1] - 140, board_text_y)
-            screen.blit(previous_board_name_text, previous_board_name_textRect)
+            write(f"{previous_score[i][1]}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[1], board_text_y))
+            write(f"{previous_score[i][0]}", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[1]-140, board_text_y))
             board_text_y += 30
 
         # 리더보드 / 최근 플레이 기록에 데이터가 부족하면 채워 넣기
         for i in range(0, 15 - pre_size):
-            fill_board_score_text = board_font.render("0", True, BLACK)
-            fill_board_score_textRect_l = fill_board_score_text.get_rect()
-            fill_board_score_textRect_p = fill_board_score_text.get_rect()
-            fill_board_score_textRect_l.center = (
-                homeUI_text_x[0], board_text_y)
-            fill_board_score_textRect_p.center = (
-                homeUI_text_x[1], board_text_y)
-            screen.blit(fill_board_score_text, fill_board_score_textRect_l)
-            screen.blit(fill_board_score_text, fill_board_score_textRect_p)
-
-            fill_board_name_text = board_font.render("None", True, BLACK)
-            fill_board_name_textRect_l = fill_board_name_text.get_rect()
-            fill_board_name_textRect_p = fill_board_name_text.get_rect()
-            fill_board_name_textRect_l.center = (
-                homeUI_text_x[0] - 140, board_text_y)
-            fill_board_name_textRect_p.center = (
-                homeUI_text_x[1] - 140, board_text_y)
-            screen.blit(fill_board_name_text, fill_board_name_textRect_l)
-            screen.blit(fill_board_name_text, fill_board_name_textRect_p)
+            write("0", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[0], board_text_y))
+            write("0", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[1], board_text_y))
+            write("None", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[0]-140, board_text_y))
+            write("None", "OpenSans-Regular.ttf", 20, BLACK, (homeUI_text_x[1]-140, board_text_y))
             board_text_y += 30
 
         # 이름 입력칸, 나가는 아이콘, 도움말 아이콘
@@ -817,7 +739,7 @@ def runGame():
         screen.blit(intro_button, (homeUI_icon_x[1] + 240, 600))
         pygame.draw.rect(screen, (200, 200, 200),
                          (homeUI_icon_x[1], 530, 340, 50))
-        img1 = input_font.render(nickname, True, BLACK)
+        img1 = get_font("OpenSans-Regular.ttf", 30).render(nickname, True, BLACK)
         rect1 = img1.get_rect()
         rect1.topleft = (homeUI_icon_x[1] + 10, 535)
         cursor1 = pygame.Rect(rect1.topright, (3, rect1.height))
@@ -826,8 +748,7 @@ def runGame():
         if writing_name and time.time() % 1 > 0.5:
             pygame.draw.rect(screen, RED, cursor1)
         if len(nickname) == 0:
-            blank_text = input_font.render("Enter Name", True, (100, 100, 100))
-            screen.blit(blank_text, (homeUI_text_x[1] - 300, 534))
+            write("Enter Name", "OpenSans-Regular.ttf", 30, BLACK, (homeUI_text_x[1]-300, 534), "topleft", 100)
 
         # 플레이어 공 프린트
         screen.blit(player_ball, (player_x, player_y))
